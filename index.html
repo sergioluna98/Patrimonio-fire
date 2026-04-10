@@ -360,19 +360,6 @@
 
 </main>
 
-<!-- EXPORT MODAL -->
-<div class="modal-overlay" id="export-modal">
-  <div class="modal" style="max-width:600px;">
-    <div class="modal-title">Exportar CSV</div>
-    <div class="modal-desc">Pulsa <strong>Copiar</strong> y pega el contenido en un archivo de texto (.csv) o en Notes para guardarlo.</div>
-    <textarea id="csv-content" readonly style="width:100%;height:200px;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:12px;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted2);resize:none;outline:none;line-height:1.6;"></textarea>
-    <div class="btn-row" style="margin-top:14px;">
-      <button class="btn" onclick="copiarCSV()">📋 Copiar todo</button>
-      <button class="btn btn-ghost" onclick="closeExport()">Cerrar</button>
-    </div>
-  </div>
-</div>
-
 <!-- RESET MODAL -->
 <div class="modal-overlay" id="reset-modal">
   <div class="modal">
@@ -909,28 +896,20 @@ function confirmarReset(){
 
 function exportCSV(){
   const s=sorted();
-  if(!s.length){toast('⚠️ No hay datos para exportar');return;}
+  if(!s.length){alert('No hay datos para exportar');return;}
   const rows=[['Mes','ETFs','Bitcoin','MatPrimas','Otros','Efectivo','Deuda','Ingresos','Patrimonio Total','Nota']];
   s.forEach(e=>rows.push([e.fecha,e.etfs||0,e.btc||0,e.mp||0,e.otros||0,e.liq||0,e.deuda||0,e.ingresos||0,pat(e),e.nota||'']));
-  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  document.getElementById('csv-content').value=csv;
-  document.getElementById('export-modal').classList.add('open');
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=window.URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`patrimonio_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+  alert('Datos exportados correctamente');
 }
 
-function copiarCSV(){
-  const ta=document.getElementById('csv-content');
-  ta.select();
-  try{
-    navigator.clipboard.writeText(ta.value).then(()=>toast('✅ Copiado al portapapeles')).catch(()=>{
-      document.execCommand('copy');
-      toast('✅ Copiado al portapapeles');
-    });
-  }catch(e){
-    document.execCommand('copy');
-    toast('✅ Copiado al portapapeles');
-  }
-}
-function closeExport(){document.getElementById('export-modal').classList.remove('open');}
 
 function handleCSV(ev){
   const file=ev.target.files[0];if(!file)return;
